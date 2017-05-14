@@ -3,5 +3,6 @@
 
 To get xchange module run submodule update:
 ```bash
+git submodule init
 git submodule update
 ```
