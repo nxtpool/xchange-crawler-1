@@ -22,8 +22,28 @@ public class RethinkDbService implements InitializingBean {
     private RethinkDB r;
     private Connection conn;
 
-    @Value("${rethink.db.name}")
+    @Value("${rethink.db}")
     private String db;
+
+    @Value("${rethink.host}")
+    private String host;
+
+    @Value("${rethink.port}")
+    private int port;
+
+    @Value("${rethink.authKey}")
+    private String authKey;
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        r = RethinkDB.r;
+        Connection.Builder connBuilder = r.connection().hostname(host).port(port);
+        if (authKey.trim().length() > 0) {
+            connBuilder = connBuilder.authKey(authKey);
+        }
+        conn = connBuilder.connect();
+        createTickerTable();
+    }
 
     private void createTickerTable() {
         Boolean dbExists = r.dbList().contains(db).run(conn);
@@ -51,10 +71,4 @@ public class RethinkDbService implements InitializingBean {
         r.db(db).table(TICKERS).insert(expression).run(conn);
     }
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        r = RethinkDB.r;
-        conn = r.connection().hostname("localhost").port(28015).connect();
-        createTickerTable();
-    }
 }

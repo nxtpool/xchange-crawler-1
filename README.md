@@ -25,4 +25,6 @@ elastic.node.host - elasticsearch localhost
 ```
 
 
+####Prerequisites
+Java, Maven, RthinkDB, Elasticsearch
 
