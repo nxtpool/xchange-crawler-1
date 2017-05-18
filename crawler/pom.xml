@@ -80,7 +80,7 @@
         <dependency>
             <groupId>org.knowm.xchange</groupId>
             <artifactId>xchange-huobi</artifactId>
-            <version>${xchange.version}</version>
+            <version>${xchange.fixed.version}</version>
         </dependency>
 
         <dependency>

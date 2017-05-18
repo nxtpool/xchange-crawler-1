@@ -1,5 +1,6 @@
 package fund.cyber.xchange.markets;
 
+import fund.cyber.xchange.model.TradeDto;
 import fund.cyber.xchange.service.ElasticsearchService;
 import fund.cyber.xchange.service.RethinkDbService;
 import org.knowm.xchange.Exchange;
@@ -14,6 +15,7 @@ import fund.cyber.xchange.model.api.TickerDto;
 import fund.cyber.xchange.service.ChaingearDataLoader;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -37,6 +39,12 @@ public abstract class Market implements InitializingBean {
 
     @Autowired
     private RethinkDbService dbService;
+
+    @Value("${elastic}")
+    private boolean elastic;
+
+    @Value("${rethink}")
+    private boolean rethink;
 
     @Autowired
     private ElasticsearchService elasticService;
@@ -112,19 +120,27 @@ public abstract class Market implements InitializingBean {
     }
 
     public void loadData() throws IOException {
-        List<TickerDto> tickers = new ArrayList<TickerDto>();
         for (CurrencyPair pair : getCurrencyPairs()) {
             if (!chaingearDataLoader.isCurrency(pair.counter.getSymbol()) || !chaingearDataLoader.isCurrency(pair.base.getSymbol())) {
                 continue;
             }
             try {
-                Ticker ticker = getTicker(pair);
+                List<Trade> trades = getTrades(pair);
+                /*
                 Calendar yesterday = Calendar.getInstance();
                 yesterday.add(Calendar.DAY_OF_MONTH, -1);
+
                 if (ticker != null && ticker.getTimestamp().after(yesterday.getTime())) {
-                    TickerDto tickerDto = chaingearDataLoader.createTickerDto(ticker, pair, getMarketUrl());
-                    dbService.insertTicker(tickerDto);
-                    elasticService.insertTicker(tickerDto);
+                */
+                    //TickerDto tickerDto = chaingearDataLoader.createTickerDto(ticker, pair, getMarketUrl());
+                for (Trade trade: trades) {
+                    TradeDto dto = new TradeDto(trade, getMarketUrl());
+                    if (rethink) {
+                        dbService.insertTrade(dto);
+                    }
+                    if (elastic) {
+                        elasticService.insertTrade(dto);
+                    }
                 }
             } catch (IOException e) {
                 System.out.print("Host: " + exchange.getDefaultExchangeSpecification().getHost() + ". Pair: " + pair.base.getSymbol() + "/" + pair.counter.getSymbol());
