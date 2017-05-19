@@ -2,14 +2,13 @@ package fund.cyber.xchange.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import fund.cyber.xchange.model.TradeDto;
+import fund.cyber.xchange.model.api.TradeDto;
 import fund.cyber.xchange.model.api.TickerDto;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
-import org.knowm.xchange.dto.marketdata.Trade;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;

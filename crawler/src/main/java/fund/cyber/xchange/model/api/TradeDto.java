@@ -1,6 +1,5 @@
-package fund.cyber.xchange.model;
+package fund.cyber.xchange.model.api;
 
-import org.knowm.xchange.dto.Order;
 import org.knowm.xchange.dto.marketdata.Trade;
 
 import java.math.BigDecimal;

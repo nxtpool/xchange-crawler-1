@@ -1,149 +1,117 @@
 package fund.cyber.xchange.markets;
 
-import fund.cyber.xchange.model.TradeDto;
-import fund.cyber.xchange.service.ElasticsearchService;
-import fund.cyber.xchange.service.RethinkDbService;
 import org.knowm.xchange.Exchange;
 import org.knowm.xchange.ExchangeFactory;
 import org.knowm.xchange.currency.CurrencyPair;
-import org.knowm.xchange.dto.marketdata.Ticker;
+import org.knowm.xchange.dto.Order;
 import org.knowm.xchange.dto.marketdata.Trade;
 import org.knowm.xchange.exceptions.NotAvailableFromExchangeException;
 import org.knowm.xchange.exceptions.NotYetImplementedForExchangeException;
 import org.knowm.xchange.service.marketdata.MarketDataService;
-import fund.cyber.xchange.model.api.TickerDto;
 import fund.cyber.xchange.service.ChaingearDataLoader;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 /**
  * Abstract Market Service
  * <p>
+ *
  * @author Andrey Lobarev nxtpool@gmail.com
  */
 public abstract class Market implements InitializingBean {
 
-    protected Exchange exchange;
-
-    protected MarketDataService dataService;
-
     @Autowired
     private ChaingearDataLoader chaingearDataLoader;
 
-    @Autowired
-    private RethinkDbService dbService;
+    private Exchange exchange;
+    private MarketDataService dataService;
 
-    @Value("${elastic}")
-    private boolean elastic;
+    private String marketUrl;
 
-    @Value("${rethink}")
-    private boolean rethink;
+    private List<CurrencyPair> currencyPairs;
+    private Calendar currencyPairsLastRequest;
 
-    @Autowired
-    private ElasticsearchService elasticService;
-
-    public abstract Class<? extends Exchange> getExchangeClass();
+    private Map<CurrencyPair,Trade> lastReceivedTrade = new HashMap<>();
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        initExchange();
-        dataService = exchange.getMarketDataService();
+        try {
+            exchange = ExchangeFactory.INSTANCE.createExchange(getExchangeClass().getName());
+            exchange.applySpecification(exchange.getDefaultExchangeSpecification());
+            dataService = exchange.getMarketDataService();
+            initMarketUrl();
+        } catch (Throwable t) {
+            //DO nothing
+        }
     }
 
-    public void initExchange() {
-        exchange = ExchangeFactory.INSTANCE.createExchange(getExchangeClass().getName());
-        exchange.applySpecification(exchange.getDefaultExchangeSpecification());
-    }
+    public abstract Class<? extends Exchange> getExchangeClass();
 
-    public boolean useCurrentDate() {
-        return false;
+    private void initMarketUrl() {
+        marketUrl = exchange.getDefaultExchangeSpecification().getHost();
+        if (marketUrl == null) {
+            marketUrl = exchange.getDefaultExchangeSpecification().getSslUri();
+        }
+        if (marketUrl == null) {
+            marketUrl = exchange.getDefaultExchangeSpecification().getPlainTextUri();
+        }
+        if (!marketUrl.startsWith("http://") && !marketUrl.startsWith("https://")) {
+            marketUrl = "http://" + marketUrl;
+        }
     }
 
     public List<CurrencyPair> getCurrencyPairs() throws IOException {
+        Calendar now = Calendar.getInstance();
+        now.add(Calendar.MINUTE, -10);
+        if (currencyPairsLastRequest == null || currencyPairsLastRequest.before(now)) {
+            currencyPairs = exchange.getExchangeSymbols();
+            currencyPairsLastRequest = Calendar.getInstance();
+        }
+        return currencyPairs;
+    }
+
+    protected List<CurrencyPair> getExchangeSymbols() {
         return exchange.getExchangeSymbols();
     }
 
-    public List<Trade> getTrades(CurrencyPair currencyPair) throws NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
-        return dataService.getTrades(currencyPair).getTrades();
+    public List<Trade> getTrades(CurrencyPair pair) throws NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+        List<Trade> trades = dataService.getTrades(pair).getTrades();
+        trades = trades.stream().map(trade -> trade.getId() != null ? trade :
+                new Trade(trade.getType(), trade.getTradableAmount(), trade.getCurrencyPair(),
+                        trade.getPrice(), trade.getTimestamp(), trade.toString()))
+                .collect(Collectors.toList());
+        trades.sort(Comparator.comparing(Trade::getTimestamp));
+        if (lastReceivedTrade.get(pair) != null) {
+            int index = trades.indexOf(lastReceivedTrade.get(pair));
+            if (index > 0) {
+                trades = trades.subList(0, index);
+            } else {
+                //TODO need to request more trades
+                System.out.println("Not enough data. Host: " + marketUrl + ". Pair: " + pair.base.getSymbol() + "/" + pair.counter.getSymbol());
+            }
+        }
+        lastReceivedTrade.put(pair, trades.get(trades.size() - 1));
+        return trades;
     }
 
-    public Ticker getTicker(CurrencyPair currencyPair) throws IOException {
-        Ticker ticker = dataService.getTicker(currencyPair);
-        if (ticker == null) {
-            return null;
-        }
-
-        if (ticker.getTimestamp() != null && ticker.getTimestamp().after(new Date(0L))) {
-            return ticker;
-        }
-
-        List<Trade> trades = new ArrayList<>();
-        try {
-            trades = getTrades(currencyPair);
-        } catch (NotAvailableFromExchangeException | NotYetImplementedForExchangeException e) {
-            //Do nothing
-        }
-
-        if (trades.size() == 0 && !useCurrentDate()) {
-            return null;
-        }
-
-        trades.sort((o1, o2) -> o2.getTimestamp().compareTo(o1.getTimestamp()));
-        Date date = (trades.size() > 0) ? trades.get(0).getTimestamp() : new Date();
-
-        return (new Ticker.Builder()).currencyPair(currencyPair)
-                .last(ticker.getLast())
-                .bid(ticker.getBid())
-                .ask(ticker.getAsk())
-                .high(ticker.getHigh())
-                .low(ticker.getLow())
-                .vwap(ticker.getVwap())
-                .volume(ticker.getVolume())
-                .timestamp(date).build();
-    }
-
-    public String getMarketUrl() {
-        String url = exchange.getDefaultExchangeSpecification().getHost() != null ?
-                exchange.getDefaultExchangeSpecification().getHost() :
-                exchange.getDefaultExchangeSpecification().getSslUri();
-        if (!url.startsWith("http://") && !url.startsWith("https://")) {
-            url = "http://" + url;
-        }
-        return url;
-    }
-
-    public void loadData() throws IOException {
+    public void loadTrades(BiConsumer<Trade, String> tradeSaver) throws IOException {
         for (CurrencyPair pair : getCurrencyPairs()) {
             if (!chaingearDataLoader.isCurrency(pair.counter.getSymbol()) || !chaingearDataLoader.isCurrency(pair.base.getSymbol())) {
                 continue;
             }
             try {
-                List<Trade> trades = getTrades(pair);
-                /*
-                Calendar yesterday = Calendar.getInstance();
-                yesterday.add(Calendar.DAY_OF_MONTH, -1);
-
-                if (ticker != null && ticker.getTimestamp().after(yesterday.getTime())) {
-                */
-                    //TickerDto tickerDto = chaingearDataLoader.createTickerDto(ticker, pair, getMarketUrl());
-                for (Trade trade: trades) {
-                    TradeDto dto = new TradeDto(trade, getMarketUrl());
-                    if (rethink) {
-                        dbService.insertTrade(dto);
-                    }
-                    if (elastic) {
-                        elasticService.insertTrade(dto);
-                    }
+                for (Trade trade : getTrades(pair)) {
+                    tradeSaver.accept(trade, marketUrl);
                 }
             } catch (IOException e) {
-                System.out.print("Host: " + exchange.getDefaultExchangeSpecification().getHost() + ". Pair: " + pair.base.getSymbol() + "/" + pair.counter.getSymbol());
+                System.out.println("Host: " + exchange.getDefaultExchangeSpecification().getHost() + ". Pair: " + pair.base.getSymbol() + "/" + pair.counter.getSymbol());
                 System.out.println(e);
             }
         }
@@ -151,5 +119,9 @@ public abstract class Market implements InitializingBean {
 
     public Exchange getExchange() {
         return exchange;
+    }
+
+    public MarketDataService getDataService() {
+        return dataService;
     }
 }

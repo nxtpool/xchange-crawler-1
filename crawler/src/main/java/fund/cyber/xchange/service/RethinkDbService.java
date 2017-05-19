@@ -3,19 +3,14 @@ package fund.cyber.xchange.service;
 import com.rethinkdb.RethinkDB;
 import com.rethinkdb.model.MapObject;
 import com.rethinkdb.net.Connection;
-import fund.cyber.xchange.model.TradeDto;
+import fund.cyber.xchange.model.api.TradeDto;
 import fund.cyber.xchange.model.api.TickerDto;
-import org.knowm.xchange.dto.marketdata.Trade;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
 import java.lang.reflect.Field;
 import java.util.Date;
-import java.util.Properties;
 
 @Component
 public class RethinkDbService implements InitializingBean {
