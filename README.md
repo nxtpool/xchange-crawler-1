@@ -27,8 +27,3 @@ elastic.cluster.name - name of the elasticsearch cluster
 elastic.node.host - elasticsearch localhost
 
 ```
-
-
-####Prerequisites
-Java, Maven, RthinkDB, Elasticsearch
-
