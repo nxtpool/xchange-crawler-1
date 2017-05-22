@@ -24,7 +24,7 @@
     </mvc:annotation-driven>
 
     <task:annotation-driven executor="executor"/>
-    <task:executor id="executor" pool-size="5" keep-alive="15" queue-capacity="1000" />
+    <task:executor id="executor" pool-size="25" keep-alive="15" queue-capacity="1000" />
 
     <context:component-scan base-package="fund.cyber.xchange.markets"/>
     <context:component-scan base-package="fund.cyber.xchange.markets"/>

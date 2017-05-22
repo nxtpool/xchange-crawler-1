@@ -44,11 +44,10 @@ public abstract class Market implements InitializingBean {
     public void afterPropertiesSet() throws Exception {
         try {
             exchange = ExchangeFactory.INSTANCE.createExchange(getExchangeClass().getName());
-            exchange.applySpecification(exchange.getDefaultExchangeSpecification());
             dataService = exchange.getMarketDataService();
             initMarketUrl();
         } catch (Throwable t) {
-            //DO nothing
+            System.out.println(t);
         }
     }
 

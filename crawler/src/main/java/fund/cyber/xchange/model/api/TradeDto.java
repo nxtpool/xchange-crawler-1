@@ -19,7 +19,7 @@ public class TradeDto {
 
     public TradeDto(Trade trade, String market) {
 
-        this.type = trade.getType().name();
+        this.type = trade.getType() != null ? trade.getType().name() : null;
         this.baseAmount = trade.getTradableAmount();
         this.base = trade.getCurrencyPair().base.getSymbol();
         this.quote = trade.getCurrencyPair().counter.getSymbol();
