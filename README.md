@@ -1,7 +1,11 @@
-# Xchange-crawler
-### Xchange crawler for cryptoasset's markets with RethinkDB and ElasticSearch drivers
+# XChange-crawler
+### Crawler for cryptoasset's markets using XChange library
 
-To get xchange module run submodule update:
+XChange-crawler polls implemented exchange markets (see #8 for
+the list) and sends data to RethinkDB and ElasticSearch through
+thier dedicated DB drivers.
+
+Before building crawler, let git fetch XChange sources:
 ```bash
 git submodule init
 git submodule update
@@ -23,6 +27,3 @@ elastic.cluster.name - name of the elasticsearch cluster
 elastic.node.host - elasticsearch localhost
 
 ```
-
-
-
