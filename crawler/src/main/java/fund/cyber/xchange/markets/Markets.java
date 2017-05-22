@@ -72,8 +72,8 @@ public class Markets {
             return BitbayExchange.class;
         }
 
-        public List<Trade> getTrades(CurrencyPair currencyPair) throws IOException {
-            return dataService.getTrades(currencyPair, null, "desc").getTrades();
+        public List<Trade> getTrades(CurrencyPair pair) throws IOException {
+            return getDataService().getTrades(pair, null, "desc").getTrades();
         }
     }
 
@@ -120,7 +120,7 @@ public class Markets {
 
         @Override
         public List<CurrencyPair> getCurrencyPairs() throws IOException {
-            BTCEExchangeInfo info = ((BTCEMarketDataServiceRaw) dataService).getBTCEInfo();
+            BTCEExchangeInfo info = ((BTCEMarketDataServiceRaw) getDataService()).getBTCEInfo();
             List<CurrencyPair> result = new ArrayList<>();
             info.getPairs().keySet().forEach(p -> result.add(new CurrencyPair(p.toUpperCase().replace('_','/'))));
             return result;
@@ -168,9 +168,6 @@ public class Markets {
         public Class<? extends Exchange> getExchangeClass() {
             return JubiExchange.class;
         }
-        public boolean useCurrentDate() {
-            return true;
-        }
     }
 
     @Service
@@ -184,9 +181,6 @@ public class Markets {
     public class LakeBTCMarket extends Market {
         public Class<? extends Exchange> getExchangeClass() {
             return LakeBTCExchange.class;
-        }
-        public boolean useCurrentDate() {
-            return true;
         }
     }
 
@@ -218,17 +212,12 @@ public class Markets {
         }
     }
 
-    /*
     @Service
     public class RippleMarket extends Market {
         public Class<? extends Exchange> getExchangeClass() {
             return RippleExchange.class;
         }
-        public boolean useCurrentDate() {
-            return true;
-        }
     }
-*/
 
     @Service
     public class HitbtcMarket extends Market {
@@ -236,7 +225,7 @@ public class Markets {
             return HitbtcExchange.class;
         }
         public List<CurrencyPair> getCurrencyPairs() throws IOException {
-            HitbtcSymbols info = ((HitbtcMarketDataService) dataService).getHitbtcSymbols();
+            HitbtcSymbols info = ((HitbtcMarketDataService) getDataService()).getHitbtcSymbols();
             return info.getHitbtcSymbols().stream()
                     .map(p -> new CurrencyPair(p.getCommodity(), p.getCurrency()))
                     .collect(Collectors.toList());
