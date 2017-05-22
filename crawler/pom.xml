@@ -290,7 +290,7 @@
         <dependency>
             <groupId>org.knowm.xchange</groupId>
             <artifactId>xchange-btc38</artifactId>
-            <version>${xchange.fixed.version}</version>
+            <version>${xchange.snapshot.version}</version>
         </dependency>
 
         <dependency>
@@ -302,7 +302,7 @@
         <dependency>
             <groupId>org.knowm.xchange</groupId>
             <artifactId>xchange-jubi</artifactId>
-            <version>${xchange.fixed.version}</version>
+            <version>${xchange.snapshot.version}</version>
         </dependency>
 
         <dependency>
