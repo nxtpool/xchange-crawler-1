@@ -32,6 +32,7 @@ public class RethinkDbService implements InitializingBean {
     @Value("${rethink.authKey}")
     private String authKey;
 
+    //FIXME create indices
     @Override
     public void afterPropertiesSet() throws Exception {
         r = RethinkDB.r;

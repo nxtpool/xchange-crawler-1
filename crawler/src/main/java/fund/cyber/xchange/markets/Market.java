@@ -11,6 +11,7 @@ import org.knowm.xchange.service.marketdata.MarketDataService;
 import fund.cyber.xchange.service.ChaingearDataLoader;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -96,14 +97,25 @@ public abstract class Market implements InitializingBean {
                 System.out.println("Not enough data. Host: " + marketUrl + ". Pair: " + pair.base.getSymbol() + "/" + pair.counter.getSymbol());
             }
         }
-        lastReceivedTrade.put(pair, trades.get(trades.size() - 1));
+        if (trades.size() > 0) {
+            lastReceivedTrade.put(pair, trades.get(trades.size() - 1));
+        } else {
+            System.out.println("No data. Host: " + marketUrl + ". Pair: " + pair.base.getSymbol() + "/" + pair.counter.getSymbol());
+        }
         return trades;
     }
 
+    @Async
     public void loadTrades(BiConsumer<Trade, String> tradeSaver) throws IOException {
         for (CurrencyPair pair : getCurrencyPairs()) {
+            loadTrades(pair, tradeSaver);
+        }
+    }
+
+    @Async
+    public void loadTrades(CurrencyPair pair, BiConsumer<Trade, String> tradeSaver) throws IOException {
             if (!chaingearDataLoader.isCurrency(pair.counter.getSymbol()) || !chaingearDataLoader.isCurrency(pair.base.getSymbol())) {
-                continue;
+                return;
             }
             try {
                 for (Trade trade : getTrades(pair)) {
@@ -113,7 +125,6 @@ public abstract class Market implements InitializingBean {
                 System.out.println("Host: " + exchange.getDefaultExchangeSpecification().getHost() + ". Pair: " + pair.base.getSymbol() + "/" + pair.counter.getSymbol());
                 System.out.println(e);
             }
-        }
     }
 
     public Exchange getExchange() {
@@ -122,5 +133,9 @@ public abstract class Market implements InitializingBean {
 
     public MarketDataService getDataService() {
         return dataService;
+    }
+
+    public String getMarketUrl() {
+        return marketUrl;
     }
 }
