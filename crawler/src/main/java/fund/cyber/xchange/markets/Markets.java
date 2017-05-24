@@ -29,6 +29,9 @@ import org.knowm.xchange.cryptonit.v2.CryptonitExchange;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.marketdata.Trade;
 import org.knowm.xchange.empoex.EmpoExExchange;
+import org.knowm.xchange.exceptions.ExchangeException;
+import org.knowm.xchange.exceptions.NotAvailableFromExchangeException;
+import org.knowm.xchange.exceptions.NotYetImplementedForExchangeException;
 import org.knowm.xchange.gatecoin.GatecoinExchange;
 import org.knowm.xchange.gdax.GDAXExchange;
 import org.knowm.xchange.gemini.v1.GeminiExchange;
@@ -61,6 +64,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 @Service
@@ -143,23 +147,9 @@ public class Markets {
     }
 
     @Service
-    public class CoinbaseMarket extends Market {
-        public Class<? extends Exchange> getExchangeClass() {
-            return CoinbaseExchange.class;
-        }
-    }
-
-    @Service
     public class CoinmateMarket extends Market {
         public Class<? extends Exchange> getExchangeClass() {
             return CoinmateExchange.class;
-        }
-    }
-
-    @Service
-    public class GatecoinMarket extends Market {
-        public Class<? extends Exchange> getExchangeClass() {
-            return GatecoinExchange.class;
         }
     }
 
@@ -175,20 +165,18 @@ public class Markets {
         public Class<? extends Exchange> getExchangeClass() {
             return KrakenExchange.class;
         }
-    }
 
-    @Service
-    public class LakeBTCMarket extends Market {
-        public Class<? extends Exchange> getExchangeClass() {
-            return LakeBTCExchange.class;
+        @Override
+        public List<Trade> getTrades(CurrencyPair pair) throws NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+            try {
+                return super.getTrades(pair);
+            } catch (ExchangeException e) {
+                //TODO process this exception in general
+                System.out.println("Kraken invalid pair: " + pair.toString());
+                return new ArrayList<>();
+            }
         }
-    }
 
-    @Service
-    public class LoyalbitMarket extends Market {
-        public Class<? extends Exchange> getExchangeClass() {
-            return LoyalbitExchange.class;
-        }
     }
 
     @Service
@@ -206,20 +194,6 @@ public class Markets {
     }
 
     @Service
-    public class QuoineMarket extends Market {
-        public Class<? extends Exchange> getExchangeClass() {
-            return QuoineExchange.class;
-        }
-    }
-
-    @Service
-    public class RippleMarket extends Market {
-        public Class<? extends Exchange> getExchangeClass() {
-            return RippleExchange.class;
-        }
-    }
-
-    @Service
     public class HitbtcMarket extends Market {
         public Class<? extends Exchange> getExchangeClass() {
             return HitbtcExchange.class;
@@ -229,27 +203,6 @@ public class Markets {
             return info.getHitbtcSymbols().stream()
                     .map(p -> new CurrencyPair(p.getCommodity(), p.getCurrency()))
                     .collect(Collectors.toList());
-        }
-    }
-
-    @Service
-    public class ANXMarket extends Market {
-        public Class<? extends Exchange> getExchangeClass() {
-            return ANXExchange.class;
-        }
-    }
-
-    @Service
-    public class BitcoindeMarket extends Market {
-        public Class<? extends Exchange> getExchangeClass() {
-            return BitcoindeExchange.class;
-        }
-    }
-
-    @Service
-    public class BitcurexMarket extends Market {
-        public Class<? extends Exchange> getExchangeClass() {
-            return BitcurexExchange.class;
         }
     }
 
@@ -296,13 +249,6 @@ public class Markets {
     }
 
     @Service
-    public class BTCTradeMarket extends Market {
-        public Class<? extends Exchange> getExchangeClass() {
-            return BTCTradeExchange.class;
-        }
-    }
-
-    @Service
     public class YoBitMarket extends Market {
         public Class<? extends Exchange> getExchangeClass() {
             return YoBitExchange.class;
@@ -317,13 +263,6 @@ public class Markets {
     }
 
     @Service
-    public class CampBXMarket extends Market {
-        public Class<? extends Exchange> getExchangeClass() {
-            return CampBXExchange.class;
-        }
-    }
-
-    @Service
     public class ItBitMarket extends Market {
         public Class<? extends Exchange> getExchangeClass() {
             return ItBitExchange.class;
@@ -334,6 +273,114 @@ public class Markets {
     public class LivecoinMarket extends Market {
         public Class<? extends Exchange> getExchangeClass() {
             return LivecoinExchange.class;
+        }
+
+        @Override
+        public List<Trade> getTrades(CurrencyPair pair) throws NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+            try {
+                return super.getTrades(pair);
+            } catch (ArrayIndexOutOfBoundsException e) {
+                //TODO need to fix LivecoinAdapters.java:99
+                return new ArrayList<>();
+            }
+        }
+    }
+
+    @Service
+    public class PaymiumMarket extends Market {
+        public Class<? extends Exchange> getExchangeClass() {
+            return PaymiumExchange.class;
+        }
+    }
+
+    @Service
+    public class QuadrigaCxMarket extends Market {
+        public Class<? extends Exchange> getExchangeClass() {
+            return QuadrigaCxExchange.class;
+        }
+    }
+    @Service
+    public class TheRockMarket extends Market {
+        public Class<? extends Exchange> getExchangeClass() {
+            return TheRockExchange.class;
+        }
+    }
+
+    /*
+    @Service
+    public class CoinbaseMarket extends Market {
+        public Class<? extends Exchange> getExchangeClass() {
+            return CoinbaseExchange.class;
+        }
+    }
+
+    @Service
+    public class GatecoinMarket extends Market {
+        public Class<? extends Exchange> getExchangeClass() {
+            return GatecoinExchange.class;
+        }
+    }
+
+    @Service
+    public class LakeBTCMarket extends Market {
+        public Class<? extends Exchange> getExchangeClass() {
+            return LakeBTCExchange.class;
+        }
+    }
+
+    @Service
+    public class LoyalbitMarket extends Market {
+        public Class<? extends Exchange> getExchangeClass() {
+            return LoyalbitExchange.class;
+        }
+    }
+
+    @Service
+    public class QuoineMarket extends Market {
+        public Class<? extends Exchange> getExchangeClass() {
+            return QuoineExchange.class;
+        }
+    }
+
+    @Service
+    public class RippleMarket extends Market {
+        public Class<? extends Exchange> getExchangeClass() {
+            return RippleExchange.class;
+        }
+    }
+
+    @Service
+    public class ANXMarket extends Market {
+        public Class<? extends Exchange> getExchangeClass() {
+            return ANXExchange.class;
+        }
+    }
+
+    @Service
+    public class BitcoindeMarket extends Market {
+        public Class<? extends Exchange> getExchangeClass() {
+            return BitcoindeExchange.class;
+        }
+    }
+
+    @Service
+    public class BitcurexMarket extends Market {
+        public Class<? extends Exchange> getExchangeClass() {
+            return BitcurexExchange.class;
+        }
+    }
+
+    @Service
+    public class BTCTradeMarket extends Market {
+        public Class<? extends Exchange> getExchangeClass() {
+            return BTCTradeExchange.class;
+        }
+    }
+
+    @Service
+    public class CampBXMarket extends Market {
+        public Class<? extends Exchange> getExchangeClass() {
+            return CampBXExchange.class;
         }
     }
 
@@ -380,30 +427,9 @@ public class Markets {
     }
 
     @Service
-    public class PaymiumMarket extends Market {
-        public Class<? extends Exchange> getExchangeClass() {
-            return PaymiumExchange.class;
-        }
-    }
-
-    @Service
-    public class QuadrigaCxMarket extends Market {
-        public Class<? extends Exchange> getExchangeClass() {
-            return QuadrigaCxExchange.class;
-        }
-    }
-
-    @Service
     public class TaurusMarket extends Market {
         public Class<? extends Exchange> getExchangeClass() {
             return TaurusExchange.class;
-        }
-    }
-
-    @Service
-    public class TheRockMarket extends Market {
-        public Class<? extends Exchange> getExchangeClass() {
-            return TheRockExchange.class;
         }
     }
 
@@ -427,4 +453,5 @@ public class Markets {
             return VircurexExchange.class;
         }
     }
+    */
 }

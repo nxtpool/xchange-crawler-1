@@ -2,23 +2,23 @@ package fund.cyber.xchange.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import fund.cyber.xchange.markets.Market;
+import fund.cyber.xchange.markets.TradeLoadTask;
+import fund.cyber.xchange.markets.MarketLoadTrigger;
 import fund.cyber.xchange.model.api.TradeDto;
-import fund.cyber.xchange.model.common.IndexHolder;
+import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.marketdata.Trade;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.task.TaskExecutor;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.util.Calendar;
 import java.util.List;
+import java.util.concurrent.ScheduledFuture;
 import java.util.function.BiConsumer;
 
 @Service
-public class MarketDataLoader implements InitializingBean {
+public class MarketProcessor implements InitializingBean {
 
     @Value("${elastic.save}")
     private boolean elastic;
@@ -35,44 +35,11 @@ public class MarketDataLoader implements InitializingBean {
     @Autowired
     private List<Market> markets;
 
-    private final IndexHolder indexHolder = new IndexHolder();
-
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        indexHolder.setLength(markets.size());
-    }
-
-    private Market getNextMarket() {
-        synchronized (indexHolder) {
-            Market market = markets.get(indexHolder.getIndex());
-            indexHolder.increaseIndex();
-            return market;
-        }
-    }
-
     @Autowired
-    private TaskExecutor taskExecutor;
+    private TaskScheduler scheduler;
 
-    @Scheduled(fixedRate = 1000)
-    protected void loadData() throws IOException {
-        taskExecutor.execute(() -> {
-            Market market = getNextMarket();
+    private BiConsumer<Trade, String> saver = new BiConsumer<Trade, String>() {
 
-            Calendar start = Calendar.getInstance();
-
-            try {
-                market.loadTrades(new MarketTradeSaver());
-            } catch (IOException e) {
-                System.out.print("Host: " + market.getExchange().getDefaultExchangeSpecification().getHost());
-                System.out.println(e);
-            }
-
-        });
-    }
-
-    public class MarketTradeSaver implements BiConsumer<Trade, String> {
-
-        @Override
         public void accept(Trade trade, String marketUrl) {
             TradeDto dto = new TradeDto(trade, marketUrl);
             if (rethink) {
@@ -85,6 +52,22 @@ public class MarketDataLoader implements InitializingBean {
                     System.out.println("Host: " + marketUrl + ". Pair: " + trade.getCurrencyPair().base.getSymbol() + "/" + trade.getCurrencyPair().counter.getSymbol());
                     System.out.println(e);
                 }
+            }
+        }
+    };
+
+    @Override
+    public void afterPropertiesSet() {
+        for (Market market : markets) {
+            try {
+                for (CurrencyPair pair : market.getCurrencyPairs()) {
+                    ScheduledFuture<?> s = scheduler.schedule(new TradeLoadTask(market, pair, saver), new MarketLoadTrigger(market, pair));
+                }
+            } catch (Exception e) {
+                System.out.print("Host: " + market.getExchange().getDefaultExchangeSpecification().getHost());
+                System.out.print("Ignore market");
+                System.out.println(e);
+
             }
         }
     }
