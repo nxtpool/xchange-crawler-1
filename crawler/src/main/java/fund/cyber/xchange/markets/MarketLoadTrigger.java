@@ -52,7 +52,7 @@ public class MarketLoadTrigger implements Trigger {
             }
 
         } catch (IOException e) {
-            System.out.print("Host: " + market.getExchange().getDefaultExchangeSpecification().getHost());
+            System.out.print("[4] Host: " + market.getExchange().getDefaultExchangeSpecification().getHost());
             System.out.print("Stop loading");
             System.out.println(e);
             return null;
