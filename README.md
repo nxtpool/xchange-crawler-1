@@ -1,4 +1,4 @@
-# XChange-crawler
+[![Travis branch](https://img.shields.io/travis/cyberFund/xchange-crawler/master.svg)](https://travis-ci.org/cyberFund/xchange-crawler)
 ### Crawler for cryptoasset's markets using XChange library
 
 XChange-crawler polls implemented exchange markets (see #8 for
