@@ -27,10 +27,7 @@
     <bean id="taskExecutor" class="org.springframework.core.task.SimpleAsyncTaskExecutor">
         <property name="concurrencyLimit" value="-1" />
     </bean>
-<!--
-    <task:annotation-driven executor="executor" scheduler="taskScheduler"/>
-    <task:executor  id="executor" pool-size="250" keep-alive="1500" queue-capacity="10000" />
--->
+
     <task:scheduler id="taskScheduler" pool-size="500"/>
 
     <context:component-scan base-package="fund.cyber.xchange.markets"/>

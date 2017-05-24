@@ -81,6 +81,10 @@ public abstract class Market implements InitializingBean {
         return exchange.getExchangeSymbols();
     }
 
+    public void updateMarketPairs() throws IOException {
+        exchange.remoteInit();
+    }
+
     public List<Trade> getTrades(CurrencyPair pair) throws NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
         List<Trade> trades = dataService.getTrades(pair).getTrades();
         trades = trades.stream().map(trade -> trade.getId() != null ? trade :
@@ -94,13 +98,13 @@ public abstract class Market implements InitializingBean {
                 trades = trades.subList(0, index);
             } else {
                 //TODO need to request more trades
-                System.out.println("Not enough data. Host: " + marketUrl + ". Pair: " + pair.base.getSymbol() + "/" + pair.counter.getSymbol());
+                System.out.println((new Date().toString()) + " Not enough data. Host: " + marketUrl + ". Pair: " + pair.base.getSymbol() + "/" + pair.counter.getSymbol());
             }
         }
         if (trades.size() > 0) {
             lastReceivedTrade.put(pair, trades.get(trades.size() - 1));
         } else {
-            System.out.println("No data. Host: " + marketUrl + ". Pair: " + pair.base.getSymbol() + "/" + pair.counter.getSymbol());
+            System.out.println((new Date().toString()) + " No data. Host: " + marketUrl + ". Pair: " + pair.base.getSymbol() + "/" + pair.counter.getSymbol());
         }
         return trades;
     }
@@ -122,7 +126,7 @@ public abstract class Market implements InitializingBean {
                     tradeSaver.accept(trade, marketUrl);
                 }
             } catch (IOException e) {
-                System.out.println("Host: " + exchange.getDefaultExchangeSpecification().getHost() + ". Pair: " + pair.base.getSymbol() + "/" + pair.counter.getSymbol());
+                System.out.println("[5] Host: " + exchange.getDefaultExchangeSpecification().getHost() + ". Pair: " + pair.base.getSymbol() + "/" + pair.counter.getSymbol());
                 System.out.println(e);
             }
     }
