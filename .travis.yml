@@ -13,4 +13,6 @@ cache:
 #  - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
 
 script:
-  - mvn install dependency:copy-dependencies
+  - mvn test
+  - mvn dependency:copy-dependencies
+  - ls -la
