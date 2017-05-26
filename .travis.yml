@@ -14,5 +14,5 @@ cache:
 
 script:
   - mvn test
-  - mvn dependency:copy-dependencies -DoutputDirectory=bin
+  - mvn dependency:copy-dependencies -DoutputDirectory=$PWD/bin
   - ls -la
