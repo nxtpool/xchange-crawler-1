@@ -15,4 +15,6 @@ cache:
 script:
   - mvn test
   - mvn dependency:copy-dependencies -DoutputDirectory=$PWD/bin
+  - cd bin
   - ls -la
+  - zip crawler-dev-${TRAVIS_BUILD_NUMBER}.zip *
