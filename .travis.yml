@@ -6,10 +6,11 @@ cache:
   directories:
     - $HOME/.m2
   
-# Travis calls `mvn install` automatically
+# Travis calls `mvn install` automatically without tests
 # https://docs.travis-ci.com/user/languages/java/#Dependency-Management
+# -B - non-interactive, -V - show version
 #install:
-#  - mvn install
+#  - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
 
 script:
-  - mvn dependency:copy-dependencies
+  - mvn test dependency:copy-dependencies
