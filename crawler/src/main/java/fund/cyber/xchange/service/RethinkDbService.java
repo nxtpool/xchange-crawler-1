@@ -76,7 +76,7 @@ public class RethinkDbService implements InitializingBean {
         MapObject expression = new MapObject();
         for (Field field : TradeDto.class.getDeclaredFields()) {
             try {
-                expression.with(field.getName().equals("id") ? "_id" : field.getName(), field.get(trade) instanceof Date ? ((Date) field.get(trade)).getTime() : field.get(trade));
+                expression.with(field.getName().equals("hash") ? "_id" : field.getName(), field.get(trade) instanceof Date ? ((Date) field.get(trade)).getTime() : field.get(trade));
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             }

@@ -3,7 +3,6 @@ package fund.cyber.xchange.markets;
 import org.knowm.xchange.Exchange;
 import org.knowm.xchange.ExchangeFactory;
 import org.knowm.xchange.currency.CurrencyPair;
-import org.knowm.xchange.dto.Order;
 import org.knowm.xchange.dto.marketdata.Trade;
 import org.knowm.xchange.exceptions.NotAvailableFromExchangeException;
 import org.knowm.xchange.exceptions.NotYetImplementedForExchangeException;
@@ -14,10 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 
 import java.io.IOException;
-import java.math.BigDecimal;
+import java.net.SocketTimeoutException;
 import java.util.*;
 import java.util.function.BiConsumer;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 /**
@@ -39,13 +37,16 @@ public abstract class Market implements InitializingBean {
     private List<CurrencyPair> currencyPairs;
     private Calendar currencyPairsLastRequest;
 
-    private Map<CurrencyPair,Trade> lastReceivedTrade = new HashMap<>();
+    private Map<CurrencyPair,List<Trade>> lastTrades = new HashMap<>();
+
+    protected TradeGetter tradeGetter;
 
     @Override
     public void afterPropertiesSet() throws Exception {
         try {
             exchange = ExchangeFactory.INSTANCE.createExchange(getExchangeClass().getName());
             dataService = exchange.getMarketDataService();
+            initTradeGetter();
             initMarketUrl();
         } catch (Throwable t) {
             System.out.println(t);
@@ -53,6 +54,10 @@ public abstract class Market implements InitializingBean {
     }
 
     public abstract Class<? extends Exchange> getExchangeClass();
+
+    public void initTradeGetter() {
+        tradeGetter = new TradeGetterDefault(dataService);
+    }
 
     private void initMarketUrl() {
         marketUrl = exchange.getDefaultExchangeSpecification().getHost();
@@ -86,38 +91,41 @@ public abstract class Market implements InitializingBean {
     }
 
     public List<Trade> getTrades(CurrencyPair pair) throws NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
-        List<Trade> trades = dataService.getTrades(pair).getTrades();
-        trades = trades.stream().map(trade -> trade.getId() != null ? trade :
-                new Trade(trade.getType(), trade.getTradableAmount(), trade.getCurrencyPair(),
-                        trade.getPrice(), trade.getTimestamp(), trade.toString()))
-                .collect(Collectors.toList());
+        Calendar start = Calendar.getInstance();
+        List<Trade> lastPairTrades = lastTrades.get(pair);
+        Trade lastTrade = lastPairTrades != null ? lastPairTrades.get(lastPairTrades.size() - 1) : null;
+        List<Trade> trades = tradeGetter.apply(pair, lastTrade);
+        if (trades == null) {
+            //FIXME maybe need something to do here
+            return new ArrayList<>();
+        }
         trades.sort(Comparator.comparing(Trade::getTimestamp));
-        if (lastReceivedTrade.get(pair) != null) {
-            int index = trades.indexOf(lastReceivedTrade.get(pair));
-            if (index > 0) {
-                trades = trades.subList(0, index);
-            } else {
-                //TODO need to request more trades
-                System.out.println((new Date().toString()) + " Not enough data. Host: " + marketUrl + ". Pair: " + pair.base.getSymbol() + "/" + pair.counter.getSymbol());
+        trades = trades.stream().map(trade -> trade.getId() != null ? trade : new Trade(trade.getType(),
+                trade.getTradableAmount(), trade.getCurrencyPair(), trade.getPrice(), trade.getTimestamp(),
+                "" + trade.toString().hashCode())).collect(Collectors.toList());
+        if (trades.size() == 0) {
+            //System.out.println((new Date().toString()) + " No data. Host: " + marketUrl + ". Pair: " + pair.base.getSymbol() + "/" + pair.counter.getSymbol());
+            return trades;
+        }
+
+        lastTrades.put(pair, trades);
+
+        if (lastTrade != null) {
+            int index = trades.indexOf(lastTrade);
+            if (index > -1) {
+                trades = trades.subList(index + 1, trades.size());
+                //System.out.println(trades.size());
+            } else if (Collections.disjoint(lastPairTrades, trades)) {
+                System.out.println(String.format("%tT Not enough data. Host: %s. Pair: %s. Search for id: %s. Last id: %s.",
+                        new Date(), marketUrl, pair, lastTrade.getId(), trades.get(trades.size() - 1).getId()));
             }
         }
-        if (trades.size() > 0) {
-            lastReceivedTrade.put(pair, trades.get(trades.size() - 1));
-        } else {
-            System.out.println((new Date().toString()) + " No data. Host: " + marketUrl + ". Pair: " + pair.base.getSymbol() + "/" + pair.counter.getSymbol());
-        }
+
         return trades;
     }
 
     @Async
-    public void loadTrades(BiConsumer<Trade, String> tradeSaver) throws IOException {
-        for (CurrencyPair pair : getCurrencyPairs()) {
-            loadTrades(pair, tradeSaver);
-        }
-    }
-
-    @Async
-    public void loadTrades(CurrencyPair pair, BiConsumer<Trade, String> tradeSaver) throws IOException {
+    public void processTrades(CurrencyPair pair, BiConsumer<Trade, String> tradeSaver) throws IOException {
             if (!chaingearDataLoader.isCurrency(pair.counter.getSymbol()) || !chaingearDataLoader.isCurrency(pair.base.getSymbol())) {
                 return;
             }
@@ -125,6 +133,8 @@ public abstract class Market implements InitializingBean {
                 for (Trade trade : getTrades(pair)) {
                     tradeSaver.accept(trade, marketUrl);
                 }
+            } catch (SocketTimeoutException ste) {
+                processTrades(pair, tradeSaver);
             } catch (IOException e) {
                 System.out.println("[5] Host: " + exchange.getDefaultExchangeSpecification().getHost() + ". Pair: " + pair.base.getSymbol() + "/" + pair.counter.getSymbol());
                 System.out.println(e);
