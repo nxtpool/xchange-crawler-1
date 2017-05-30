@@ -372,6 +372,19 @@
             <version>0.3.1</version>
         </dependency>
 
+        <!-- Embedded Jetty server -->
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-server</artifactId>
+            <version>${jetty.version}</version>
+        </dependency>
+        <!-- Web Application Context Handler -->
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-webapp</artifactId>
+            <version>${jetty.version}</version>
+        </dependency>
+
         <!-- Spring web MVC -->
         <dependency>
             <groupId>org.springframework</groupId>
@@ -437,6 +450,7 @@
 
     <properties>
         <spring.version>4.3.8.RELEASE</spring.version>
+        <jetty.version>9.4.5.v20170502</jetty.version>
         <xchange.version>4.2.0</xchange.version>
         <xchange.fixed.version>4.2.1-FIXED</xchange.fixed.version>
         <xchange.snapshot.version>4.2.1-SNAPSHOT</xchange.snapshot.version>
