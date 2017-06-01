@@ -1,5 +1,5 @@
 [![Travis branch](https://img.shields.io/travis/cyberFund/xchange-crawler/master.svg)](https://travis-ci.org/cyberFund/xchange-crawler)
-### Crawler for cryptoasset's markets using XChange library
+### [XChange]-based crawler for cryptoasset's markets
 
 XChange-crawler polls implemented exchange markets (see #8 for
 the list) and sends data to RethinkDB and ElasticSearch through
@@ -29,3 +29,5 @@ elastic.cluster.name - name of the elasticsearch cluster
 elastic.node.host - elasticsearch localhost
 
 ```
+
+[XChange]: https://github.com/timmolter/XChange
