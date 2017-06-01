@@ -5,6 +5,8 @@ XChange-crawler polls implemented exchange markets (see #8 for
 the list) and sends data to RethinkDB and ElasticSearch through
 thier dedicated DB drivers.
 
+#### Building from source
+
 Before building crawler, let git fetch XChange sources:
 ```bash
 git submodule init
