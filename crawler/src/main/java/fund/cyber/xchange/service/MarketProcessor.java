@@ -91,7 +91,8 @@ public class MarketProcessor implements InitializingBean {
             }
             try {
                 for (CurrencyPair pair : market.getCurrencyPairs()) {
-                    ScheduledFuture<?> s = scheduler.schedule(new TradeLoadTask(market, pair, saver), new MarketLoadTrigger(market, pair));
+                    TradeLoadTask task = new TradeLoadTask(market, pair, saver);
+                    scheduler.schedule(task, new MarketLoadTrigger(market, pair));
                 }
             } catch (Exception e) {
                 System.out.print("[6] Host: " + market.getExchange().getDefaultExchangeSpecification().getHost());

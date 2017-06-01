@@ -10,7 +10,7 @@ import java.util.Date;
 
 public class MarketLoadTrigger implements Trigger {
 
-    private static final int RATE = 5000;
+    private static final int RATE = 10000;
 
     private final Market market;
     private final CurrencyPair pair;
@@ -22,15 +22,7 @@ public class MarketLoadTrigger implements Trigger {
 
     @Override
     public Date nextExecutionTime(TriggerContext context) {
-        //This is not interesting because of Async
-        /*
-        System.out.println(String.format("Market:%s, Pair:%s, ScheduledTime:%3$tT.%3$tL, ExecutionTime:%4$tT.%4$tL, CompletionTime:%5$tT.%5$tL",
-                market.getMarketUrl(),
-                pair.toString(),
-                context.lastScheduledExecutionTime(),
-                context.lastActualExecutionTime(),
-                context.lastCompletionTime()));
-                */
+
         try {
             if (!market.getCurrencyPairs().contains(pair)) {
                 return null;
@@ -39,14 +31,10 @@ public class MarketLoadTrigger implements Trigger {
                     return new Date();
                 }
                 Calendar next = Calendar.getInstance();
-                next.setTime(context.lastActualExecutionTime());
+                if (context.lastActualExecutionTime() != null) {
+                    next.setTime(context.lastActualExecutionTime());
+                }
                 next.add(Calendar.MILLISECOND, RATE);
-                /*
-                System.out.println(String.format("Market:%s, Pair:%s, Next call:%3$tT.%3$tL",
-                        market.getMarketUrl(),
-                        pair.toString(),
-                        next));
-*/
 
                 return next.getTime();
             }

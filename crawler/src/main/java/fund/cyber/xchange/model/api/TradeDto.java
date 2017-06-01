@@ -12,7 +12,7 @@ public class TradeDto {
     public final BigDecimal quoteAmount;
     public final BigDecimal price;
     public final Date timestamp;
-    public final String id;
+    public final String hash;
     public final String market;
     public String base;
     public String quote;
@@ -26,8 +26,8 @@ public class TradeDto {
         this.price = trade.getPrice();
         this.quoteAmount = trade.getTradableAmount().multiply(trade.getPrice());
         this.timestamp = trade.getTimestamp();
-        this.id = trade.getId();
         this.market = market;
+        this.hash = Integer.toString(this.hashCode());
     }
 
     public String getType() {
@@ -50,8 +50,8 @@ public class TradeDto {
         return timestamp;
     }
 
-    public String getId() {
-        return id;
+    public String getHash() {
+        return hash;
     }
 
     public String getBase() {
@@ -91,7 +91,7 @@ public class TradeDto {
     public String toString() {
 
         return "Trade [type=" + type + ", baseAmount=" + baseAmount + ", currencyPair=" + base + "/" + quote + ", price=" + price + ", timestamp="
-                + timestamp + ", id=" + id + "]";
+                + timestamp + ", hash=" + hash + "]";
     }
 
 }
