@@ -10,7 +10,7 @@
                 http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd
     http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd">
 
-    <context:property-placeholder location="classpath:rest.properties"/>
+    <context:property-placeholder location="classpath*:crawler.properties"/>
 
     <mvc:annotation-driven>
         <mvc:message-converters>
@@ -23,11 +23,16 @@
         </mvc:message-converters>
     </mvc:annotation-driven>
 
-    <task:annotation-driven executor="executor"/>
-    <task:executor id="executor" pool-size="5" keep-alive="15" queue-capacity="1000" />
+    <!--mvc:default-servlet-handler/-->
 
-    <context:component-scan base-package="fund.cyber.xchange.rest"/>
+    <bean id="taskExecutor" class="org.springframework.core.task.SimpleAsyncTaskExecutor">
+        <property name="concurrencyLimit" value="-1" />
+    </bean>
+
+    <task:scheduler id="taskScheduler" pool-size="500"/>
+
     <context:component-scan base-package="fund.cyber.xchange.markets"/>
     <context:component-scan base-package="fund.cyber.xchange.service"/>
+    <context:component-scan base-package="fund.cyber.xchange.rest"/>
 
 </beans>

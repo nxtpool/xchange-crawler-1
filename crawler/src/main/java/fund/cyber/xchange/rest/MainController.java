@@ -21,7 +21,7 @@ import java.util.Map;
  * @author Andrey Lobarev nxtpool@gmail.com
  */
 @Controller
-@RequestMapping(value = "/")
+@RequestMapping(value = "api")
 public class MainController {
 
     @Autowired
