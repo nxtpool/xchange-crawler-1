@@ -10,6 +10,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -18,16 +19,18 @@ import java.net.InetAddress;
 @Component
 public class ElasticsearchService implements InitializingBean {
 
-    @Value("${elastic.cluster.name}")
-    private String elasticClusterName;
-
-    @Value("${elastic.node.host}")
-    private String elasticNodeHost;
+    @Autowired
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+    private Config config;
 
     private TransportClient client;
 
     @Override
     public void afterPropertiesSet() throws Exception {
+
+        String elasticClusterName = config.getProperty("elastic.cluster.name");
+        String elasticNodeHost = config.getProperty("elastic.node.host");
+
         Settings settings = Settings.builder()
                 .put("cluster.name", elasticClusterName).build();
         client = new PreBuiltTransportClient(settings)
