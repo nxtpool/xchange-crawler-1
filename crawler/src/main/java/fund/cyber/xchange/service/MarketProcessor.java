@@ -2,21 +2,21 @@ package fund.cyber.xchange.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import fund.cyber.xchange.markets.Market;
+import fund.cyber.xchange.markets.OrderLoadTask;
 import fund.cyber.xchange.markets.TradeLoadTask;
 import fund.cyber.xchange.markets.MarketLoadTrigger;
+import fund.cyber.xchange.model.api.OrderDto;
 import fund.cyber.xchange.model.api.TradeDto;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.marketdata.Trade;
+import org.knowm.xchange.dto.trade.LimitOrder;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.TaskScheduler;
-import org.springframework.scheduling.Trigger;
-import org.springframework.scheduling.TriggerContext;
 import org.springframework.stereotype.Service;
 
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.function.BiConsumer;
@@ -42,7 +42,11 @@ public class MarketProcessor implements InitializingBean {
     @Autowired
     private TaskScheduler scheduler;
 
-    private BiConsumer<Trade, String> saver = new BiConsumer<Trade, String>() {
+    private static final int TRADE_RATE = 5000;
+    private static final int ORDER_RATE = 15000;
+    private static final int PAIRS_RATE = 60;
+
+    private BiConsumer<Trade, String> tradeSaver = new BiConsumer<Trade, String>() {
 
         public void accept(Trade trade, String marketUrl) {
             TradeDto dto = new TradeDto(trade, marketUrl);
@@ -60,6 +64,24 @@ public class MarketProcessor implements InitializingBean {
         }
     };
 
+    private BiConsumer<LimitOrder, String> orderSaver = new BiConsumer<LimitOrder, String>() {
+
+        public void accept(LimitOrder order, String marketUrl) {
+            OrderDto dto = new OrderDto(order, marketUrl);
+            if (rethink) {
+                dbService.insertOrder(dto);
+            }
+            if (elastic) {
+                try {
+                    elasticService.insertOrder(dto);
+                } catch (JsonProcessingException e) {
+                    System.out.println("Host: " + marketUrl + ". Pair: " + order.getCurrencyPair().base.getSymbol() + "/" + order.getCurrencyPair().counter.getSymbol());
+                    System.out.println(e);
+                }
+            }
+        }
+    };
+
     @Override
     public void afterPropertiesSet() {
         for (Market market : markets) {
@@ -69,7 +91,7 @@ public class MarketProcessor implements InitializingBean {
                     try {
                         market.updateMarketPairs();
                     } catch (Exception e) {
-                        System.out.print("[1] Host: " + market.getExchange().getDefaultExchangeSpecification().getHost());
+                        System.out.print("[1] " + market.getClass().getSimpleName() + ":");
                         System.out.print("Remote init error");
                         System.out.println(e);
 
@@ -79,22 +101,34 @@ public class MarketProcessor implements InitializingBean {
                     if (context.lastActualExecutionTime() != null) {
                         next.setTime(context.lastActualExecutionTime());
                     }
-                    next.add(Calendar.SECOND, 60);
+                    next.add(Calendar.SECOND, PAIRS_RATE);
                     return next.getTime();
                 });
 
             } catch (Exception e) {
-                System.out.print("[2] Host: " + market.getExchange().getDefaultExchangeSpecification().getHost());
+                System.out.print("[2] " + market.getClass().getSimpleName() + ":");
                 System.out.print("Ignore market");
                 System.out.println(e);
 
             }
+
             try {
                 for (CurrencyPair pair : market.getCurrencyPairs()) {
-                    ScheduledFuture<?> s = scheduler.schedule(new TradeLoadTask(market, pair, saver), new MarketLoadTrigger(market, pair));
+                    ScheduledFuture<?> s = scheduler.schedule(new TradeLoadTask(market, pair, tradeSaver), new MarketLoadTrigger(market, pair, TRADE_RATE));
                 }
             } catch (Exception e) {
-                System.out.print("[6] Host: " + market.getExchange().getDefaultExchangeSpecification().getHost());
+                System.out.print("[6] " + market.getClass().getSimpleName() + ":");
+                System.out.print("Ignore market");
+                System.out.println(e);
+
+            }
+
+            try {
+                for (CurrencyPair pair : market.getCurrencyPairs()) {
+                    ScheduledFuture<?> s = scheduler.schedule(new OrderLoadTask(market, pair, orderSaver), new MarketLoadTrigger(market, pair, ORDER_RATE));
+                }
+            } catch (Exception e) {
+                System.out.print("[6] " + market.getClass().getSimpleName() + ":");
                 System.out.print("Ignore market");
                 System.out.println(e);
 

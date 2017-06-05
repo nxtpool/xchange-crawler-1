@@ -10,27 +10,18 @@ import java.util.Date;
 
 public class MarketLoadTrigger implements Trigger {
 
-    private static final int RATE = 5000;
-
     private final Market market;
     private final CurrencyPair pair;
+    private final int rate;
 
-    public MarketLoadTrigger(Market market, CurrencyPair pair) {
+    public MarketLoadTrigger(Market market, CurrencyPair pair, int rate) {
         this.market = market;
         this.pair = pair;
+        this.rate =  rate;
     }
 
     @Override
     public Date nextExecutionTime(TriggerContext context) {
-        //This is not interesting because of Async
-        /*
-        System.out.println(String.format("Market:%s, Pair:%s, ScheduledTime:%3$tT.%3$tL, ExecutionTime:%4$tT.%4$tL, CompletionTime:%5$tT.%5$tL",
-                market.getMarketUrl(),
-                pair.toString(),
-                context.lastScheduledExecutionTime(),
-                context.lastActualExecutionTime(),
-                context.lastCompletionTime()));
-                */
         try {
             if (!market.getCurrencyPairs().contains(pair)) {
                 return null;
@@ -40,19 +31,13 @@ public class MarketLoadTrigger implements Trigger {
                 }
                 Calendar next = Calendar.getInstance();
                 next.setTime(context.lastActualExecutionTime());
-                next.add(Calendar.MILLISECOND, RATE);
-                /*
-                System.out.println(String.format("Market:%s, Pair:%s, Next call:%3$tT.%3$tL",
-                        market.getMarketUrl(),
-                        pair.toString(),
-                        next));
-*/
+                next.add(Calendar.MILLISECOND, rate);
 
                 return next.getTime();
             }
 
         } catch (IOException e) {
-            System.out.print("[4] Host: " + market.getExchange().getDefaultExchangeSpecification().getHost());
+            System.out.print("[4] " + market.getClass().getSimpleName() + ":");
             System.out.print("Stop loading");
             System.out.println(e);
             return null;
