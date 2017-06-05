@@ -3,6 +3,8 @@ package fund.cyber.xchange.markets;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.marketdata.Trade;
 
+import java.util.Calendar;
+import java.util.Date;
 import java.util.function.BiConsumer;
 
 public class TradeLoadTask implements Runnable {
@@ -20,7 +22,7 @@ public class TradeLoadTask implements Runnable {
     @Override
     public void run() {
         try {
-            market.loadTrades(pair, saver);
+            market.processTrades(pair, saver);
         } catch (java.io.IOException e) {
             System.out.print("[3] " + market.getClass().getSimpleName() + ":");
             System.out.println(e);

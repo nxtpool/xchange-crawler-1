@@ -30,7 +30,9 @@ public class MarketLoadTrigger implements Trigger {
                     return new Date();
                 }
                 Calendar next = Calendar.getInstance();
-                next.setTime(context.lastActualExecutionTime());
+                if (context.lastActualExecutionTime() != null) {
+                    next.setTime(context.lastActualExecutionTime());
+                }
                 next.add(Calendar.MILLISECOND, rate);
 
                 return next.getTime();

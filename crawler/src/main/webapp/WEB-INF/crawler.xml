@@ -23,6 +23,7 @@
         </mvc:message-converters>
     </mvc:annotation-driven>
 
+    <!--mvc:default-servlet-handler/-->
 
     <bean id="taskExecutor" class="org.springframework.core.task.SimpleAsyncTaskExecutor">
         <property name="concurrencyLimit" value="-1" />
@@ -31,7 +32,7 @@
     <task:scheduler id="taskScheduler" pool-size="500"/>
 
     <context:component-scan base-package="fund.cyber.xchange.markets"/>
-    <context:component-scan base-package="fund.cyber.xchange.markets"/>
     <context:component-scan base-package="fund.cyber.xchange.service"/>
+    <context:component-scan base-package="fund.cyber.xchange.rest"/>
 
 </beans>

@@ -11,14 +11,20 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.stream.Collectors;
 
 @Component
 public class RethinkDbService implements InitializingBean {
 
     private static final String TICKERS = "tickers";
     private static final String TRADES = "trades";
+    private static final String MARKET = "market";
+    private static final String BASE = "base";
+    private static final String QUOTE = "quote";
     private static final String ORDERS = "orders";
+
     private RethinkDB r;
     private Connection conn;
 
@@ -43,8 +49,9 @@ public class RethinkDbService implements InitializingBean {
             connBuilder = connBuilder.authKey(authKey);
         }
         conn = connBuilder.connect();
-        createTable(TICKERS);
         createTable(TRADES);
+        createIndex(TRADES, MARKET);
+        createIndex(TRADES, new String[] {MARKET, BASE, QUOTE});
         createTable(ORDERS);
     }
 
@@ -58,6 +65,27 @@ public class RethinkDbService implements InitializingBean {
         if (!exists) {
             r.db(db).tableCreate(name).run(conn);
         }
+    }
+
+    private void createIndex(String table, String field) {
+        Boolean exists = r.db(db).table(table).indexList().contains(field).run(conn);
+
+        if (!exists) {
+            r.db(db).table(table).indexCreate(field).run(conn);
+        }
+    }
+
+    private void createIndex(String table, String[] fields) {
+        Boolean exists = r.db(db).table(table).indexList().contains(fields).run(conn);
+
+        if (!exists) {
+            r.db(db).table(table).indexCreate(indexName(fields),
+                    row -> Arrays.stream(fields).map(row::g).collect(Collectors.toList())).run(conn);
+        }
+    }
+
+    private String indexName(String[] fields) {
+        return Arrays.stream(fields).reduce((a, b) -> a + "_" + b).orElse("");
     }
 
     public void insertTicker(TickerDto ticker) {
@@ -79,7 +107,7 @@ public class RethinkDbService implements InitializingBean {
         MapObject expression = new MapObject();
         for (Field field : TradeDto.class.getDeclaredFields()) {
             try {
-                expression.with(field.getName().equals("id") ? "_id" : field.getName(), field.get(trade) instanceof Date ? ((Date) field.get(trade)).getTime() : field.get(trade));
+                expression.with(field.getName().equals("hash") ? "_id" : field.getName(), field.get(trade) instanceof Date ? ((Date) field.get(trade)).getTime() : field.get(trade));
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             }

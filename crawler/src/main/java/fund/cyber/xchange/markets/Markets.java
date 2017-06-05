@@ -50,48 +50,9 @@ import java.util.stream.Collectors;
 public class Markets {
 
     @Service
-    public class BitbayMarket extends Market {
-        public Class<? extends Exchange> getExchangeClass() {
-            return BitbayExchange.class;
-        }
-
-        public List<Trade> getTrades(CurrencyPair pair) throws IOException {
-            return getDataService().getTrades(pair, null, "desc").getTrades();
-        }
-    }
-
-    @Service
-    public class BitfinexMarket extends Market {
-        public Class<? extends Exchange> getExchangeClass() {
-            return BitfinexExchange.class;
-        }
-    }
-
-    @Service
     public class BitstampMarket extends Market {
         public Class<? extends Exchange> getExchangeClass() {
             return BitstampExchange.class;
-        }
-    }
-
-    @Service
-    public class BittrexMarket extends Market {
-        public Class<? extends Exchange> getExchangeClass() {
-            return BittrexExchange.class;
-        }
-    }
-
-    @Service
-    public class BleutradeMarket extends Market {
-        public Class<? extends Exchange> getExchangeClass() {
-            return BleutradeExchange.class;
-        }
-    }
-
-    @Service
-    public class Btc38Market extends Market {
-        public Class<? extends Exchange> getExchangeClass() {
-            return Btc38Exchange.class;
         }
     }
 
@@ -112,9 +73,90 @@ public class Markets {
     }
 
     @Service
+    public class YoBitMarket extends Market {
+        public Class<? extends Exchange> getExchangeClass() {
+            return YoBitExchange.class;
+        }
+    }
+
+
+    @Service
+    public class PoloniexMarket extends Market {
+        public Class<? extends Exchange> getExchangeClass() {
+            return PoloniexExchange.class;
+        }
+
+        @Override
+        public void initTradeGetter() {
+            tradeGetter = new TradeGetterWithTimeFrame(getExchange().getMarketDataService());
+        }
+    }
+
+    @Service
+    public class BittrexMarket extends Market {
+        public Class<? extends Exchange> getExchangeClass() {
+            return BittrexExchange.class;
+        }
+    }
+
+    @Service
+    public class Btc38Market extends Market {
+        public Class<? extends Exchange> getExchangeClass() {
+            return Btc38Exchange.class;
+        }
+
+        @Override
+        public void initTradeGetter() {
+            tradeGetter = new TradeGetterWithSinceParam(getExchange().getMarketDataService());
+        }
+    }
+
+
+    @Service
     public class BTERMarket extends Market {
         public Class<? extends Exchange> getExchangeClass() {
             return BTERExchange.class;
+        }
+
+        @Override
+        public void initTradeGetter() {
+            tradeGetter = new TradeGetterWithSinceParam(getExchange().getMarketDataService());
+        }
+    }
+
+    @Service
+    public class JubiMarket extends Market {
+        public Class<? extends Exchange> getExchangeClass() {
+            return JubiExchange.class;
+        }
+        @Override
+        public void initTradeGetter() {
+            tradeGetter = new TradeGetterWithSinceParam(getExchange().getMarketDataService());
+        }
+    }
+
+    @Service
+    public class BitbayMarket extends Market {
+        public Class<? extends Exchange> getExchangeClass() {
+            return BitbayExchange.class;
+        }
+
+        public List<Trade> getTrades(CurrencyPair pair) throws IOException {
+            return getDataService().getTrades(pair, null, "desc").getTrades();
+        }
+    }
+
+    @Service
+    public class BitfinexMarket extends Market {
+        public Class<? extends Exchange> getExchangeClass() {
+            return BitfinexExchange.class;
+        }
+    }
+
+    @Service
+    public class BleutradeMarket extends Market {
+        public Class<? extends Exchange> getExchangeClass() {
+            return BleutradeExchange.class;
         }
     }
 
@@ -173,12 +215,10 @@ public class Markets {
         public Class<? extends Exchange> getExchangeClass() {
             return OkCoinExchange.class;
         }
-    }
 
-    @Service
-    public class PoloniexMarket extends Market {
-        public Class<? extends Exchange> getExchangeClass() {
-            return PoloniexExchange.class;
+        @Override
+        public void initTradeGetter() {
+            tradeGetter = new TradeGetterWithSinceParam(getExchange().getMarketDataService());
         }
     }
 
