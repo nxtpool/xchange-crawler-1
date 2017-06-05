@@ -3,7 +3,10 @@ package fund.cyber.xchange.markets;
 import org.knowm.xchange.Exchange;
 import org.knowm.xchange.ExchangeFactory;
 import org.knowm.xchange.currency.CurrencyPair;
+import org.knowm.xchange.dto.Order;
+import org.knowm.xchange.dto.marketdata.OrderBook;
 import org.knowm.xchange.dto.marketdata.Trade;
+import org.knowm.xchange.dto.trade.LimitOrder;
 import org.knowm.xchange.exceptions.NotAvailableFromExchangeException;
 import org.knowm.xchange.exceptions.NotYetImplementedForExchangeException;
 import org.knowm.xchange.service.marketdata.MarketDataService;
@@ -124,6 +127,30 @@ public abstract class Market implements InitializingBean {
         return trades;
     }
 
+    public List<LimitOrder> getOrders(CurrencyPair pair) throws NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+        Calendar now = Calendar.getInstance();
+        List<LimitOrder> orders = new ArrayList<>();
+        try {
+            OrderBook orderBook = dataService.getOrderBook(pair);
+            orders = orderBook.getAsks();
+            orders.addAll(orderBook.getBids());
+        } catch (NotYetImplementedForExchangeException e) {
+            return orders;
+        }
+        orders = orders.stream().map(order -> order.getTimestamp() != null ? order :
+                new LimitOrder(order.getType(), order.getTradableAmount(), order.getCurrencyPair(),
+                        order.getId(),  now.getTime(), order.getLimitPrice(), order.getAveragePrice(),
+                        order.getCumulativeAmount(), order.getStatus()))
+                .collect(Collectors.toList());
+        orders.sort(Comparator.comparing(LimitOrder::getLimitPrice));
+
+        if (orders.size() == 0) {
+            System.out.println((new Date().toString()) + " No data. Host: " + marketUrl + ". Pair: " + pair.base.getSymbol() + "/" + pair.counter.getSymbol());
+        }
+
+        return orders;
+    }
+
     @Async
     public void processTrades(CurrencyPair pair, BiConsumer<Trade, String> tradeSaver) throws IOException {
             if (!chaingearDataLoader.isCurrency(pair.counter.getSymbol()) || !chaingearDataLoader.isCurrency(pair.base.getSymbol())) {
@@ -136,9 +163,24 @@ public abstract class Market implements InitializingBean {
             } catch (SocketTimeoutException ste) {
                 processTrades(pair, tradeSaver);
             } catch (IOException e) {
-                System.out.println("[5] Host: " + exchange.getDefaultExchangeSpecification().getHost() + ". Pair: " + pair.base.getSymbol() + "/" + pair.counter.getSymbol());
+                System.out.println("[5] Host: " + marketUrl + ". Pair: " + pair.base.getSymbol() + "/" + pair.counter.getSymbol());
                 System.out.println(e);
             }
+    }
+
+    @Async
+    public void loadOrders(CurrencyPair pair, BiConsumer<LimitOrder, String> orderSaver) throws IOException {
+        if (!chaingearDataLoader.isCurrency(pair.counter.getSymbol()) || !chaingearDataLoader.isCurrency(pair.base.getSymbol())) {
+            return;
+        }
+        try {
+            for (LimitOrder order : getOrders(pair)) {
+                orderSaver.accept(order, marketUrl);
+            }
+        } catch (IOException e) {
+            System.out.println("[5] Host: " + marketUrl + ". Pair: " + pair.base.getSymbol() + "/" + pair.counter.getSymbol());
+            System.out.println(e);
+        }
     }
 
     public Exchange getExchange() {

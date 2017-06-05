@@ -24,7 +24,7 @@ public class TradeLoadTask implements Runnable {
         try {
             market.processTrades(pair, saver);
         } catch (java.io.IOException e) {
-            System.out.print("[3] Host: " + market.getExchange().getDefaultExchangeSpecification().getHost());
+            System.out.print("[3] " + market.getClass().getSimpleName() + ":");
             System.out.println(e);
         }
     }

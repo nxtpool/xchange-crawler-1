@@ -2,6 +2,7 @@ package fund.cyber.xchange.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fund.cyber.xchange.model.api.OrderDto;
 import fund.cyber.xchange.model.api.TradeDto;
 import fund.cyber.xchange.model.api.TickerDto;
 import org.elasticsearch.action.index.IndexResponse;
@@ -60,4 +61,17 @@ public class ElasticsearchService implements InitializingBean {
                 .setSource(json)
                 .get();
     }
+
+    public void insertOrder(OrderDto order) throws JsonProcessingException {
+        // instance a json mapper
+        ObjectMapper mapper = new ObjectMapper(); // create once, reuse
+
+        // generate json
+        byte[] json = mapper.writeValueAsBytes(order);
+
+        IndexResponse response = client.prepareIndex("market", "order")
+                .setSource(json)
+                .get();
+    }
+
 }

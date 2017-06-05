@@ -19,6 +19,7 @@ import org.knowm.xchange.cexio.CexIOExchange;
 import org.knowm.xchange.coinmate.CoinmateExchange;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.dto.marketdata.Trade;
+import org.knowm.xchange.dto.trade.LimitOrder;
 import org.knowm.xchange.exceptions.ExchangeException;
 import org.knowm.xchange.exceptions.NotAvailableFromExchangeException;
 import org.knowm.xchange.exceptions.NotYetImplementedForExchangeException;
@@ -76,7 +77,18 @@ public class Markets {
         public Class<? extends Exchange> getExchangeClass() {
             return YoBitExchange.class;
         }
+
+        //FIXME remove after pull request merge https://github.com/timmolter/XChange/pull/1505
+        @Override
+        public List<LimitOrder> getOrders(CurrencyPair pair) throws NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+            try {
+                return super.getOrders(pair);
+            } catch (NullPointerException npe) {
+                return new ArrayList<>();
+            }
+        }
     }
+
 
 
     @Service
@@ -190,6 +202,16 @@ public class Markets {
             }
         }
 
+        @Override
+        public List<LimitOrder> getOrders(CurrencyPair pair) throws NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+            try {
+                return super.getOrders(pair);
+            } catch (ExchangeException e) {
+                //TODO process this exception in general
+                System.out.println("Kraken invalid pair: " + pair.toString());
+                return new ArrayList<>();
+            }
+        }
     }
 
     @Service
@@ -264,6 +286,16 @@ public class Markets {
         public Class<? extends Exchange> getExchangeClass() {
             return CCEXExchange.class;
         }
+
+        //FIXME remove after pull request merge https://github.com/timmolter/XChange/pull/1506
+        @Override
+        public List<LimitOrder> getOrders(CurrencyPair pair) throws NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+            try {
+                return super.getOrders(pair);
+            } catch (NullPointerException npe) {
+                return new ArrayList<>();
+            }
+        }
     }
 
     @Service
@@ -290,7 +322,6 @@ public class Markets {
         }
     }
 
-
     @Service
     public class PaymiumMarket extends Market {
         public Class<? extends Exchange> getExchangeClass() {
@@ -310,7 +341,6 @@ public class Markets {
             return TheRockExchange.class;
         }
     }
-
 
     /*
     @Service

@@ -3,6 +3,7 @@ package fund.cyber.xchange.service;
 import com.rethinkdb.RethinkDB;
 import com.rethinkdb.model.MapObject;
 import com.rethinkdb.net.Connection;
+import fund.cyber.xchange.model.api.OrderDto;
 import fund.cyber.xchange.model.api.TradeDto;
 import fund.cyber.xchange.model.api.TickerDto;
 import org.springframework.beans.factory.InitializingBean;
@@ -23,6 +24,7 @@ public class RethinkDbService implements InitializingBean {
     private static final String MARKET = "market";
     private static final String BASE = "base";
     private static final String QUOTE = "quote";
+    private static final String ORDERS = "orders";
 
     private RethinkDB r;
     private Connection conn;
@@ -51,6 +53,7 @@ public class RethinkDbService implements InitializingBean {
         createTable(TRADES);
         createIndex(TRADES, MARKET);
         createIndex(TRADES, new String[] {MARKET, BASE, QUOTE});
+        createTable(ORDERS);
     }
 
     private void createTable(String name) {
@@ -112,5 +115,19 @@ public class RethinkDbService implements InitializingBean {
         }
 
         r.db(db).table(TRADES).insert(expression).run(conn);
+    }
+
+    public void insertOrder(OrderDto order) {
+
+        MapObject expression = new MapObject();
+        for (Field field : OrderDto.class.getDeclaredFields()) {
+            try {
+                expression.with(field.getName().equals("id") ? "_id" : field.getName(), field.get(order) instanceof Date ? ((Date) field.get(order)).getTime() : field.get(order));
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
+
+        r.db(db).table(ORDERS).insert(expression).run(conn);
     }
 }

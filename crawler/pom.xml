@@ -178,7 +178,7 @@
         <dependency>
             <groupId>org.knowm.xchange</groupId>
             <artifactId>xchange-ccex</artifactId>
-            <version>${xchange.version}</version>
+            <version>${xchange.snapshot.version}</version>
         </dependency>
 
         <dependency>

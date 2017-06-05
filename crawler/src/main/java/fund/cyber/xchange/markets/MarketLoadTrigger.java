@@ -10,19 +10,18 @@ import java.util.Date;
 
 public class MarketLoadTrigger implements Trigger {
 
-    private static final int RATE = 10000;
-
     private final Market market;
     private final CurrencyPair pair;
+    private final int rate;
 
-    public MarketLoadTrigger(Market market, CurrencyPair pair) {
+    public MarketLoadTrigger(Market market, CurrencyPair pair, int rate) {
         this.market = market;
         this.pair = pair;
+        this.rate =  rate;
     }
 
     @Override
     public Date nextExecutionTime(TriggerContext context) {
-
         try {
             if (!market.getCurrencyPairs().contains(pair)) {
                 return null;
@@ -34,13 +33,13 @@ public class MarketLoadTrigger implements Trigger {
                 if (context.lastActualExecutionTime() != null) {
                     next.setTime(context.lastActualExecutionTime());
                 }
-                next.add(Calendar.MILLISECOND, RATE);
+                next.add(Calendar.MILLISECOND, rate);
 
                 return next.getTime();
             }
 
         } catch (IOException e) {
-            System.out.print("[4] Host: " + market.getExchange().getDefaultExchangeSpecification().getHost());
+            System.out.print("[4] " + market.getClass().getSimpleName() + ":");
             System.out.print("Stop loading");
             System.out.println(e);
             return null;
