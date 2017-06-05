@@ -77,7 +77,18 @@ public class Markets {
         public Class<? extends Exchange> getExchangeClass() {
             return YoBitExchange.class;
         }
+
+        //FIXME remove after pull request merge https://github.com/timmolter/XChange/pull/1505
+        @Override
+        public List<LimitOrder> getOrders(CurrencyPair pair) throws NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
+            try {
+                return super.getOrders(pair);
+            } catch (NullPointerException npe) {
+                return new ArrayList<>();
+            }
+        }
     }
+
 
 
     @Service
@@ -175,13 +186,6 @@ public class Markets {
     }
 
     @Service
-    public class JubiMarket extends Market {
-        public Class<? extends Exchange> getExchangeClass() {
-            return JubiExchange.class;
-        }
-    }
-
-    @Service
     public class KrakenMarket extends Market {
         public Class<? extends Exchange> getExchangeClass() {
             return KrakenExchange.class;
@@ -274,23 +278,6 @@ public class Markets {
     public class BTCChinaMarket extends Market {
         public Class<? extends Exchange> getExchangeClass() {
             return BTCChinaExchange.class;
-        }
-    }
-
-    @Service
-    public class YoBitMarket extends Market {
-        public Class<? extends Exchange> getExchangeClass() {
-            return YoBitExchange.class;
-        }
-
-        //FIXME remove after pull request merge https://github.com/timmolter/XChange/pull/1505
-        @Override
-        public List<LimitOrder> getOrders(CurrencyPair pair) throws NotAvailableFromExchangeException, NotYetImplementedForExchangeException, IOException {
-            try {
-                return super.getOrders(pair);
-            } catch (NullPointerException npe) {
-                return new ArrayList<>();
-            }
         }
     }
 
