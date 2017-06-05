@@ -24,11 +24,9 @@ import java.util.function.BiConsumer;
 @Service
 public class MarketProcessor implements InitializingBean {
 
-    @Value("${elastic.save}")
-    private boolean elastic;
-
-    @Value("${rethink.save}")
-    private boolean rethink;
+    @Autowired
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+    private Config config;
 
     @Autowired
     private RethinkDbService dbService;
@@ -49,6 +47,10 @@ public class MarketProcessor implements InitializingBean {
     private BiConsumer<Trade, String> tradeSaver = new BiConsumer<Trade, String>() {
 
         public void accept(Trade trade, String marketUrl) {
+
+            boolean elastic = config.getProperty("elastic.save").equals("true");
+            boolean rethink = config.getProperty("rethink.save").equals("true");
+
             TradeDto dto = new TradeDto(trade, marketUrl);
             if (rethink) {
                 dbService.insertTrade(dto);
