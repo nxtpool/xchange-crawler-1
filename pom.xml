@@ -12,28 +12,6 @@
 
     <modules>
         <module>crawler</module>
-        <module>xchange/xchange-core</module>
-        <module>xchange/xchange-bitbay</module>
-        <module>xchange/xchange-bitfinex</module>
-        <module>xchange/xchange-bitstamp</module>
-        <module>xchange/xchange-bittrex</module>
-        <module>xchange/xchange-bleutrade</module>
-        <module>xchange/xchange-btc38</module>
-        <module>xchange/xchange-btce</module>
-        <module>xchange/xchange-bter</module>
-        <module>xchange/xchange-cexio</module>
-        <module>xchange/xchange-coinbase</module>
-        <module>xchange/xchange-coinmate</module>
-        <module>xchange/xchange-gatecoin</module>
-        <module>xchange/xchange-hitbtc</module>
-        <module>xchange/xchange-jubi</module>
-        <module>xchange/xchange-kraken</module>
-        <module>xchange/xchange-lakebtc</module>
-        <module>xchange/xchange-loyalbit</module>
-        <module>xchange/xchange-okcoin</module>
-        <module>xchange/xchange-poloniex</module>
-        <module>xchange/xchange-quoine</module>
-        <module>xchange/xchange-ripple</module>
     </modules>
 
     <build>
