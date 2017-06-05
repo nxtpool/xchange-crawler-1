@@ -19,6 +19,7 @@ script:
   - mvn test
   - mvn dependency:copy-dependencies -DoutputDirectory=$PWD/bin
   - zip $DISTZIP bin/*
+  - echo $DISTZIP
 
 deploy:
   provider: releases
