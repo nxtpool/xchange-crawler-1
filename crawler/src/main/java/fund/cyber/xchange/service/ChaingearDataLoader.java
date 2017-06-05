@@ -9,6 +9,7 @@ import fund.cyber.xchange.model.api.TickerDto;
 import fund.cyber.xchange.model.api.VolumeDto;
 import fund.cyber.xchange.model.chaingear.Currency;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -31,11 +32,9 @@ public class ChaingearDataLoader implements InitializingBean {
 
     private Map<String, String> fiatCurrencies = new HashMap<>();
 
-    @Value("${ignore.symbols}")
-    private String ignoreSymbolsString;
-
-    @Value("${rename.symbols}")
-    private String renameSymbolsString;
+    @Autowired
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+    private Config config;
 
     private Set<String> ignoreSymbols;
     private Map<String, String> renameSymbols;
@@ -73,8 +72,10 @@ public class ChaingearDataLoader implements InitializingBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
+        String ignoreSymbolsString = config.getProperty("ignore.symbols");
+        String renameSymbolsString = config.getProperty("rename.symbols");
         currencyNames = loadCurrencyNames();
-        ignoreSymbols = Arrays.stream(ignoreSymbolsString.split(",")).map(s -> s.trim()).collect(Collectors.toSet());
+        ignoreSymbols = Arrays.stream(ignoreSymbolsString.split(",")).map(String::trim).collect(Collectors.toSet());
         renameSymbols = (new ObjectMapper()).readValue(renameSymbolsString, new TypeReference<Map<String,String>>(){});
     }
 

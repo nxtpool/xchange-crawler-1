@@ -1,5 +1,6 @@
 package fund.cyber.xchange;
 
+import fund.cyber.xchange.service.Config;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.HandlerList;
@@ -20,15 +21,15 @@ public class Main {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
     
-    private static final int PORT = 9999;
-    
     private static final String CONTEXT_PATH = "/";
     private static final String XML_CONTEXT_NAME = "crawler";
     private static final String MAPPING_URL = "/";
     private static final String WEBAPP_DIRECTORY = "webapp";
     
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
     public static void main(String[] args) throws Exception {
-        new Main().startJetty(PORT);
+        final Config config = new Config();
+        new Main().startJetty(config.getPort());
     }
 
     private void startJetty(int port) throws Exception {

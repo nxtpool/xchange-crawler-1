@@ -17,13 +17,13 @@ git submodule update
 To build and run crawler:
 ```bash
 mvn install
-cd crawler
-mvn exec:java
-
+cd crawler/target
+java -jar xchange-crawler-0.1.0.jar
 ```
 
-Properties stored in src/main/resorces/crawler.properties
+After first run crawler.properties file would be created the same folder as jar file.
 ```
+rest.port - port for rest api
 rethink.db.name - name of the rethink database
 elastic.cluster.name - name of the elasticsearch cluster
 elastic.node.host - elasticsearch localhost

@@ -6,6 +6,7 @@ import com.rethinkdb.net.Connection;
 import fund.cyber.xchange.model.api.TradeDto;
 import fund.cyber.xchange.model.api.TickerDto;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -26,21 +27,21 @@ public class RethinkDbService implements InitializingBean {
     private RethinkDB r;
     private Connection conn;
 
-    @Value("${rethink.db}")
+    @Autowired
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+    private Config config;
+
     private String db;
-
-    @Value("${rethink.host}")
-    private String host;
-
-    @Value("${rethink.port}")
-    private int port;
-
-    @Value("${rethink.authKey}")
-    private String authKey;
 
     //FIXME create indices
     @Override
     public void afterPropertiesSet() throws Exception {
+
+        db = config.getProperty("rethink.db");
+        String host = config.getProperty("rethink.host");
+        int port = Integer.parseInt(config.getProperty("rethink.port", "0"));
+        String authKey = config.getProperty("rethink.authKey");
+
         r = RethinkDB.r;
         Connection.Builder connBuilder = r.connection().hostname(host).port(port);
         if (authKey.trim().length() > 0) {
