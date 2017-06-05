@@ -69,6 +69,10 @@ public class MarketProcessor implements InitializingBean {
     private BiConsumer<LimitOrder, String> orderSaver = new BiConsumer<LimitOrder, String>() {
 
         public void accept(LimitOrder order, String marketUrl) {
+
+            boolean elastic = config.getProperty("elastic.save").equals("true");
+            boolean rethink = config.getProperty("rethink.save").equals("true");
+
             OrderDto dto = new OrderDto(order, marketUrl);
             if (rethink) {
                 dbService.insertOrder(dto);
